@@ -1,5 +1,6 @@
 package test;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.concurrent.*;
 
@@ -23,6 +24,9 @@ public class Test01 {
         //Executors.newScheduledThreadPool(可延迟任务线程池)
         // scheduledThreadPool();
 
+        //Executors.newSingleThreadScheduledExecutor(单线程的可以执行延迟任务的线程池)
+        SingleThreadScheduledExecutor();
+        
         //Executors.newWorkStealingPool(抢占式执行的线程池)
         // workStealingPool();
 
@@ -30,6 +34,8 @@ public class Test01 {
         threadPoolExecutor();
 
     }
+
+
 
     /**
      * new ThreadPoolExecutor()
@@ -53,18 +59,44 @@ public class Test01 {
      *      CallerRunsPolicy：使用当前调用的线程来执行此任务。
      *      DiscardOldestPolicy：抛弃队列头部（最旧）的一个任务，并执行当前任务。
      *      DiscardPolicy：忽略并抛弃当前任务。
+     *      默认策略为 AbortPolicy也可使用自定义拒绝策略
      */
     private static void threadPoolExecutor() {
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5, 7, 100,
-                TimeUnit.SECONDS, new LinkedBlockingQueue<>(10));
-        for (int i = 0; i < 20; i++) {
-            int finalI = i;
-            threadPoolExecutor.execute(() -> {
-                System.out.println(finalI + "执行" + Thread.currentThread().getName());
-                stop();
-            });
-        }
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 2, 100,
+                TimeUnit.SECONDS, new LinkedBlockingQueue<>(1)
+                , (r, executor) -> {
+                    new Thread(r).start();
+                });
+        //
+        // for (int i = 0; i < 20; i++) {
+        //     int finalI = i;
+        //     threadPoolExecutor.execute(() -> {
+        //         System.out.println(finalI + "执行" + Thread.currentThread().getName());
+        //         stop();
+        //     });
+        // }
+        threadPoolExecutor.execute(Test01::exec);
+        threadPoolExecutor.execute(Test01::exec);
+        threadPoolExecutor.execute(Test01::exec);
+        threadPoolExecutor.execute(Test01::exec);
+        threadPoolExecutor.execute(Test01::exec);
 
+    }
+
+    /**
+     * Executors.newSingleThreadScheduledExecutor()
+     * 创建一个单线程的可以执行延迟任务的线程池。
+     */
+    private static void SingleThreadScheduledExecutor() {
+        ScheduledExecutorService threadPool = Executors.newSingleThreadScheduledExecutor();
+        System.out.println("添加任务,时间:" + LocalDate.now());
+        threadPool.schedule(() -> {
+            System.out.println("任务被执行,时间:" + LocalDate.now());
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+            }
+        }, 2, TimeUnit.SECONDS);
     }
 
     /**
